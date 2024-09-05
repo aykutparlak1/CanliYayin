@@ -1,0 +1,126 @@
+﻿@model List<Chanels>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>m3u8 Video Oynatıcı</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div>
+
+    </div>
+    <video id="video" controls muted></video>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        const video = document.getElementById('video');
+
+        var videos = @Html.Raw(Json.Serialize(Model));
+        console.log(videos);
+
+    let currentIndex = 0;
+    var videoSrc = 'https://tv-trthaber.medya.trt.com.tr/master_720.m3u8';
+    function enterFullscreen() {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.mozRequestFullScreen) {
+            video.mozRequestFullScreen();
+        } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+        } else if (video.msRequestFullscreen) {
+            video.msRequestFullscreen();
+        }
+        }
+        var hls = new Hls();
+        if (Hls.isSupported()) {
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = videoSrc;
+        }
+
+    function playVideo() {
+        video.muted = false;
+        video.play();
+        enterFullscreen();
+    }
+
+        function changeVideo(index) {
+            let stt = videos[index];
+            if (stt.linkUrl.endsWith('.m3u8')) {
+            if (Hls.isSupported()) {
+                if (hls) {
+                    hls.destroy();
+                }
+                hls = new Hls();
+                hls.loadSource(videos[index].linkUrl);
+                hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = videos[index].linkUrl;
+            }
+        } else {
+                video.src = videos[index].linkUrl;
+        }
+        playVideo();
+    }
+
+    document.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            playVideo();
+        }
+    });
+        document.getElementById('video').addEventListener('ended', function () {
+            if (currentIndex < videos.length - 1) {
+                currentIndex++;
+                changeVideo(currentIndex);
+            } else if (currentIndex >= videos.length - 1) {
+                currentIndex = 0;
+                changeVideo(currentIndex);
+            }
+        });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === '8') {
+            if (currentIndex < videos.length - 1) {
+                currentIndex++;
+                changeVideo(currentIndex);
+            } else if (currentIndex >= videos.length-1) {
+                currentIndex = 0;
+                changeVideo(currentIndex);
+            }
+        } else if (event.key === '2') {
+            if (currentIndex > 0) {
+                currentIndex--;
+                changeVideo(currentIndex);
+            }
+            else if (currentIndex == 0) {
+                currentIndex = videos.length - 1;
+                changeVideo(currentIndex);
+            }
+        }
+    });
+
+    changeVideo(currentIndex);
+    </script>
+
+</body>
+</html>
